@@ -1,8 +1,6 @@
 <div align="center">
 
-# π TUI Zen
-
-**为 [pi](https://github.com/earendil-works/pi) 打造的多彩终端界面增强扩展**
+**π TUI Zen** — 为 [pi](https://github.com/earendil-works/pi) 打造的多彩终端界面增强扩展
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
