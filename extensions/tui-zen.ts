@@ -191,7 +191,7 @@ const fmt = (n: number): string => (n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)
 function getClock(): string {
 	const d = new Date();
 	const pad = (x: number) => String(x).padStart(2, "0");
-	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+	return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function getElapsed(): string {
@@ -213,6 +213,8 @@ function getTitle(pi: ExtensionAPI): string {
 // ---------------------------------------------------------------------------
 export default function (pi: ExtensionAPI) {
 	let enabled = true;
+	let currentTui: { requestRender(): void } | null = null;
+	let refreshTimer: ReturnType<typeof setInterval> | null = null;
 	let titleTimer: ReturnType<typeof setInterval> | null = null;
 	let gitBranch: string | null = null;
 	let gitTimer: ReturnType<typeof setInterval> | null = null;
@@ -230,6 +232,19 @@ export default function (pi: ExtensionAPI) {
 		if (gitTimer) {
 			clearInterval(gitTimer);
 			gitTimer = null;
+		}
+	}
+
+	// 低频刷新：合并所有定时刷新为单一 10 秒定时器，避免高频重绘干扰滚动
+	function startRefresh() {
+		stopRefresh();
+		refreshTimer = setInterval(() => currentTui?.requestRender(), 10000);
+	}
+
+	function stopRefresh() {
+		if (refreshTimer) {
+			clearInterval(refreshTimer);
+			refreshTimer = null;
 		}
 	}
 
@@ -325,12 +340,15 @@ export default function (pi: ExtensionAPI) {
 		refreshGitBranch(ctx.cwd);
 		gitTimer = setInterval(() => refreshGitBranch(ctx.cwd), 10000);
 
+		// 启动低频界面刷新（10 秒一次）
+		startRefresh();
+
 		// 1. Header：π 艺术字 + 状态面板 + 统计面板（每秒刷新）
 		ctx.ui.setHeader((tui, theme) => {
-			const clockTimer = setInterval(() => tui.requestRender(), 1000);
+			currentTui = tui;
 			return {
 				dispose() {
-					clearInterval(clockTimer);
+					stopRefresh();
 					stopGitTimer();
 				},
 				invalidate() {},
@@ -431,12 +449,11 @@ export default function (pi: ExtensionAPI) {
 
 		// 3. Footer：π 徽章 + 分支 + token + 成本 | 模型 + 时钟 + 状态徽章
 		ctx.ui.setFooter((tui, theme, footerData) => {
-			const clockTimer = setInterval(() => tui.requestRender(), 1000);
+			currentTui = tui;
 			const unsubBranch = footerData.onBranchChange(() => tui.requestRender());
 
 			return {
 				dispose() {
-					clearInterval(clockTimer);
 					unsubBranch();
 				},
 				invalidate() {},
@@ -503,6 +520,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_shutdown", async (_event, ctx) => {
 		stopTitleAnim(ctx);
+		stopRefresh();
 		stopGitTimer();
 	});
 
@@ -542,6 +560,7 @@ export default function (pi: ExtensionAPI) {
 				ctx.ui.setWorkingIndicator();
 				ctx.ui.setStatus("tui-zen", undefined);
 				stopTitleAnim(ctx);
+				stopRefresh();
 				stopGitTimer();
 				ctx.ui.notify("已恢复 pi 默认界面", "info");
 			} else {
