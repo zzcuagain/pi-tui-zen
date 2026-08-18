@@ -1,0 +1,31 @@
+{
+  "name": "pi-tui-zen",
+  "version": "0.1.0",
+  "description": "多彩终端界面增强扩展：彩虹 π 艺术字 header、状态面板、会话统计、快捷操作台、技能分类浏览。",
+  "type": "module",
+  "license": "MIT",
+  "author": "zzcuagain",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "tui",
+    "rainbow",
+    "zen",
+    "status-bar"
+  ],
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  }
+}
